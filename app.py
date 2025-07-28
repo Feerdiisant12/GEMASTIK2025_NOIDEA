@@ -90,12 +90,45 @@ if st.session_state.run_prediction_clicked and input_df is not None:
             if gemini_api_key:
                 try:
                     model = genai.GenerativeModel('gemini-1.5-flash-latest')
-                    input_dry_days = input_df['max_consecutive_dry_days'].iloc[0]; input_hot_days = input_df['max_consecutive_hot_days'].iloc[0]
-                    base_prompt = (f"Anda adalah seorang penasihat ahli kebijakan publik... (prompt lengkap seperti sebelumnya)")
+                    
+                    # Mengambil nilai input
+                    input_dry_days = input_df['max_consecutive_dry_days'].iloc[0]
+                    input_hot_days = input_df['max_consecutive_hot_days'].iloc[0]
+
+                    # Konteks dan Persona
+                    base_prompt = (
+                        "Anda adalah seorang penasihat ahli di bidang kebijakan publik dan manajemen risiko bencana, dengan spesialisasi pada adaptasi perubahan iklim dan ketahanan air. "
+                        f"Analisis data dari model machine learning yang andal telah menetapkan bahwa sebuah wilayah {selected_province_manual} dengan karakteristik berikut:\n"
+                        f"- Periode kering terpanjang: {input_dry_days} hari\n"
+                        f"- Periode panas terpanjang: {input_hot_days} hari\n"
+                        f"Hasilnya, wilayah ini dikategorikan sebagai **{result_text}**."
+                    )
+
+                    # Instruksi Dinamis berdasarkan Hasil Prediksi
                     if result_text == "Tidak Rawan Krisis Air":
-                        dynamic_instructions = (f"\nMeskipun dikategorikan 'Tidak Rawan'... Berikan insight strategis...")
-                    else:
-                        dynamic_instructions = (f"\nProbabilitas kerawanan yang tinggi... Berikan insight darurat...")
+                        dynamic_instructions = (
+                            f"\nMeskipun dikategorikan 'Tidak Rawan', probabilitas risiko tetap ada sebesar {risk_probability*100:.2f}%. "
+                            f"Berikan insight strategis dalam format markdown berikut:\n\n"
+                            f"###  Interpretasi Hasil\n"
+                            f"Jelaskan secara singkat mengapa kombinasi {input_dry_days} hari kering dan {input_hot_days} hari panas menunjukkan resiliensi yang baik terhadap krisis air.\n\n"
+                            f"### Potensi Risiko Tersembunyi\n"
+                            f"Sebutkan 2-3 potensi risiko di masa depan yang harus tetap diwaspadai oleh wilayah ini (contoh: dampak jangka panjang perubahan iklim, peningkatan populasi, perubahan tata guna lahan).\n\n"
+                            f"### Rekomendasi Proaktif untuk Menjaga Ketahanan\n"
+                            f"Berikan 3 poin rekomendasi utama yang bersifat preventif untuk memastikan wilayah ini tetap aman dari krisis air di masa depan. Gunakan bahasa yang jelas, positif, dan dapat ditindaklanjuti."
+                        )
+                    else: # Jika Rawan Krisis Air
+                        dynamic_instructions = (
+                            f"\nProbabilitas kerawanan yang tinggi ({risk_probability*100:.2f}%) menandakan situasi yang memerlukan perhatian serius. "
+                            f"Berikan insight darurat dalam format markdown berikut:\n\n"
+                            f"### Interpretasi Tingkat Kerawanan\n"
+                            f"Jelaskan secara singkat mengapa kombinasi {input_dry_days} hari kering dan {input_hot_days} hari panas menjadi pemicu utama status 'Rawan Krisis Air'.\n\n"
+                            f"### Dampak Kaskade yang Perlu Diantisipasi\n"
+                            f"Sebutkan 2-3 dampak turunan (kaskade) yang paling signifikan jika krisis air terjadi (contoh: gagal panen yang memicu inflasi, masalah sanitasi dan kesehatan, konflik sosial).\n\n"
+                            f"### Rekomendasi Aksi Cepat (Prioritas Utama)\n"
+                            f"Berikan 3 poin rekomendasi paling mendesak yang harus segera dilakukan untuk mitigasi dalam jangka pendek. Gunakan bahasa yang tegas, jelas, dan dapat ditindaklanjuti."
+                        )
+
+
                     final_prompt = base_prompt + dynamic_instructions; response = model.generate_content(final_prompt); insights_text = response.text
                 except Exception as e:
                     insights_text = f"Gagal menghasilkan insight dari Gemini. Error: {e}"
