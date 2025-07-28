@@ -89,7 +89,7 @@ if st.session_state.run_prediction_clicked and input_df is not None:
             insights_text = "..." # Default
             if gemini_api_key:
                 try:
-                    model = genai.GenerativeModel('gemini-1.5-pro-latest')
+                    model = genai.GenerativeModel('gemini-1.5-flash-latest')
                     
                     # Mengambil nilai input
                     input_dry_days = input_df['max_consecutive_dry_days'].iloc[0]
@@ -148,7 +148,7 @@ if st.session_state.run_prediction_clicked and input_df is not None:
             insights_text = "Fitur Insight AI tidak aktif."
             if gemini_api_key:
                 try:
-                    model = genai.GenerativeModel('gemini-1.5-pro-latest')
+                    model = genai.GenerativeModel('gemini-1.5-flash-latest')
                     summary_rawan = results_df['Prediksi'].value_counts().get('Rawan', 0)
                     total_data = len(results_df)
                     
